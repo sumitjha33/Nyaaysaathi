@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from pinecone import Pinecone
+import pinecone  # Changed import
 from langchain.vectorstores import Pinecone as PineconeVectorStore
 from langchain.embeddings import HuggingFaceBgeEmbeddings
 from langchain.chat_models import ChatOpenAI
@@ -34,8 +34,12 @@ os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
 os.environ["PINECONE_ENVIRONMENT"] = "us-east-1"  # Change based on your Pinecone region
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
-# Initialize Pinecone Client
-pc = Pinecone(api_key=PINECONE_API_KEY)
+# Initialize Pinecone Client - Updated initialization
+pinecone.init(
+    api_key=PINECONE_API_KEY,
+    environment="us-east-1"
+)
+
 docsearch = PineconeVectorStore.from_existing_index(
     index_name="nyaaysaathi",
     embedding=embeddings
