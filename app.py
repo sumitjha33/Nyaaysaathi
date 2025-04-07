@@ -3,59 +3,71 @@ from flask_cors import CORS
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
-import logging
-
-
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
+from langchain_community.vectorstores import Pinecone
+from pinecone import Pinecone as PineconeClient
 
 # Load environment variables
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
 
+# Initialize Pinecone
+pc = PineconeClient(api_key=os.getenv("PINECONE_API_KEY"))
+embeddings = HuggingFaceBgeEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+docsearch = Pinecone.from_existing_index(
+    index_name="nyaaysaathi",
+    embedding=embeddings,
+    namespace=""
+)
+
 app = Flask(__name__)
 CORS(app)
 
-# Define system prompt
+# Update system prompt
 system_prompt = '''You are a highly knowledgeable, empathetic, and trustworthy **AI Legal Assistant**. 
 
-CRITICAL INSTRUCTION - LANGUAGE:
-Always respond in {language} only, following these strict rules:
+CONVERSATION FLOW:
+1. First Response:
+   - Show empathy
+   - Ask essential questions
+   - DO NOT provide legal sections yet
 
-For Hindi:
-- Use pure Devanagari script only
-- Do not add English translations in brackets
-- Use formal tone (आप, कृपया)
-- Keep legal terms in Hindi
-Example: "धारा ३५४ के अनुसार..."
+2. Counter Questions Phase:
+   - Ask follow-up questions based on user's responses
+   - Gather specific details about the incident
+   - Continue until you have clear understanding
 
-For Hinglish:
-- Mix Hindi and English naturally
-- Do not add translations in brackets
-- Keep legal terms in English
-Example: "IPC Section 354 ke hisaab se..."
+3. Legal Analysis Phase (ONLY after gathering sufficient information):
+   - Use the provided IPC sections from context
+   - Explain applicable sections and punishments
+   - Provide clear next steps
 
-For English:
-- Use formal English only
-Example: "According to Section 354..."
-
-## Response Structure:
+RESPONSE STRUCTURE:
 <div class="legal-response">
+    <!-- For Initial/Counter Questions Phase -->
     <div class="response-header">
-        <h2 class="header-title">[Pure {language} title without translations]</h2>
+        <h2 class="header-title">[Title in {language}]</h2>
     </div>
     <div class="empathy-section">
-        <p class="empathy-message">[Pure {language} message without translations]</p>
+        <p class="empathy-message">[Empathy in {language}]</p>
     </div>
-    <div class="inquiry-section">
-        <h3 class="section-title">[Pure {language} title]</h3>
-        <div class="inquiry-content">
-            <p class="inquiry-intro">[Pure {language} introduction]</p>
-            <ul class="inquiry-list">
-                [Pure {language} list items without translations]
-            </ul>
+    <div class="questions-section">
+        <h3>[Important Questions]</h3>
+        <ul class="question-list">
+            [Specific questions needed]
+        </ul>
+    </div>
+
+    <!-- For Legal Analysis Phase (only after gathering all info) -->
+    <div class="legal-analysis">
+        <div class="applicable-sections">
+            <h3>Applicable IPC Sections</h3>
+            [Insert sections from Pinecone here]
+        </div>
+        <div class="next-steps">
+            <h3>Recommended Actions</h3>
+            [Action steps]
         </div>
     </div>
 </div>
@@ -64,48 +76,42 @@ Example: "According to Section 354..."
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
-        # Debug incoming request
-        logger.debug(f"Request Headers: {request.headers}")
-        logger.debug(f"Request Data: {request.data}")
-        
         data = request.get_json()
-        logger.debug(f"Processed Data: {data}")
-
         if not data:
-            logger.error("No data received in request")
             return jsonify({"error": "No data provided"}), 400
 
-        # Extract all fields from request
         current_message = data.get('message')
         chat_history = data.get('history', [])
         location = data.get('location', 'Unknown')
         preferred_language = data.get('preferred_language', 'English')
 
-        logger.info(f"""
-            Message: {current_message}
-            Location: {location}
-            Language: {preferred_language}
-        """)
-
         if not current_message:
-            logger.error("No message field in data")
             return jsonify({"error": "No message provided"}), 400
 
-        # Format the system prompt with the preferred language
         formatted_prompt = system_prompt.format(language=preferred_language)
+        
+        # Get relevant IPC sections
+        relevant_docs = docsearch.similarity_search(current_message, k=4)
+        legal_context = "\n".join([doc.page_content for doc in relevant_docs])
 
-        # Update context to enforce no translations
+        # Create context
         context = f"""
         STRICT LANGUAGE RULES:
         - Respond ONLY in: {preferred_language}
         - DO NOT add translations in brackets
-        - Keep response pure in the specified language
-        - Use natural language style for {preferred_language}
+        
+        LEGAL CONTEXT:
+        {legal_context}
+        
+        CONVERSATION STATE:
+        - If initial message or unclear: Ask essential questions first
+        - If have partial info: Ask specific follow-up questions
+        - Only provide legal sections after gathering complete information
         
         User Location: {location}
         """
 
-        # Create complete prompt with context
+        # Create complete prompt
         complete_prompt = formatted_prompt + "\n\nContext:\n" + context
         if chat_history:
             formatted_history = "\n".join([
@@ -115,46 +121,25 @@ def chat():
             complete_prompt += f"\n\nPrevious conversation:\n{formatted_history}"
         complete_prompt += f"\n\nHuman: {current_message}"
 
-        # Get response using Gemini model
+        # Get response
         model = genai.GenerativeModel("gemini-2.0-flash")
         chat = model.start_chat(history=[])
         response = chat.send_message(
             complete_prompt,
-            generation_config={
-                "temperature": 0.6,
-                "top_k": 40,
-                "top_p": 0.8,
-            }
+            generation_config={"temperature": 0.6, "top_k": 40, "top_p": 0.8}
         )
 
-        # Clean and format the response
-        formatted_response = response.text.replace('```html', '').replace('```', '')
-
-        # Get location-specific helplines
-        state = location.split(',')[-1].strip().lower() if location else None
-
         return jsonify({
-            'response': formatted_response,
+            'response': response.text.replace('```html', '').replace('```', ''),
             'status': 'success',
             'format': 'html',
-            'location': location,
             'language': preferred_language
         })
 
     except Exception as e:
-        logger.exception("Error in chat endpoint")
         return jsonify({
-            "error": "An error occurred while processing your request",
-            "details": str(e),
-            "format": "html",
-            "response": '''
-                <div class="error-container">
-                    <div class="error-message">
-                        <h3>Error Processing Request</h3>
-                        <p>I apologize, but I encountered an error. Please try again.</p>
-                    </div>
-                </div>
-            '''
+            "error": "An error occurred",
+            "status": "error"
         }), 500
 
 if __name__ == '__main__':
