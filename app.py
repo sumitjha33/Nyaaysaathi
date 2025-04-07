@@ -22,7 +22,28 @@ docsearch = Pinecone.from_existing_index(
 )
 
 app = Flask(__name__)
-CORS(app)
+# Update CORS configuration
+CORS(app, 
+     resources={r"/*": {
+         "origins": [
+             "http://localhost:3000",
+             "http://127.0.0.1:3000",
+             "https://nyaaysaathi.vercel.app",  # Add your frontend domain
+             "http://localhost:5173"  # Add any other frontend URLs
+         ],
+         "methods": ["GET", "POST", "OPTIONS"],
+         "allow_headers": ["Content-Type", "Authorization"],
+         "supports_credentials": True,
+         "expose_headers": ["Content-Type", "Authorization"]
+     }})
+
+# Add CORS headers to all responses
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 # Update system prompt
 system_prompt = '''You are a highly knowledgeable, empathetic, and trustworthy **AI Legal Assistant**. 
