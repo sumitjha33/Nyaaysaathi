@@ -2,6 +2,7 @@ flask==2.3.3
 flask-cors==4.0.0
 google-generativeai==0.3.2
 python-dotenv==1.0.0
+gunicorn==21.2.0
 typing-extensions>=4.8.0
 fastapi==0.104.1
 langchain==0.1.0
