@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NyaySaathi Client</title>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --bg-light: #f5f5f5;
+            --bg-user: #e3f2fd;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--bg-light);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        #loginPanel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        #chatPanel {
+            display: none;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+        }
+
+        .chat-area {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 70%;
+        }
+
+        .user-message {
+            background: var(--bg-user);
+            margin-left: auto;
+        }
+
+        .bot-message {
+            background: var(--bg-light);
+        }
+
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex: 1;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .status {
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .error {
+            animation: fadeInOut 5s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loginPanel">
+            <h2>Login to NyaySaathi</h2>
+            <div>
+                <input type="text" id="username" placeholder="Username (test)" value="test">
+                <input type="password" id="password" placeholder="Password (test123)" value="test123">
+                <button onclick="login()">Login</button>
+            </div>
+            <div class="status" id="loginStatus"></div>
+        </div>
+
+        <div id="chatPanel">
+            <div class="header">
+                <h2>NyaySaathi Legal Assistant</h2>
+                <button onclick="logout()" style="float:right;margin-top:-40px">Logout</button>
+            </div>
+            <div class="chat-area" id="chatArea">
+                <div class="message bot-message">
+                    Hello! I'm NyaySaathi, your AI Legal Assistant. How can I help you today?
+                </div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Type your message..." autofocus>
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000';  // Updated to local host
+        let isLoggedIn = false;  // Define isLoggedIn globally
+
+        async function makeRequest(url, options = {}) {
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'  // Ensure cookies are sent with the request
+            };
+            
+            try {
+                const response = await fetch(url, { ...defaultOptions, ...options });
+                if (response.status === 401) {
+                    await handleSessionExpired();
+                    return null;
+                }
+                return response;
+            } catch (error) {
+                console.error('Request Error:', error);
+                return null;
+            }
+        }
+
+        async function handleSessionExpired() {
+            isLoggedIn = false;
+            localStorage.removeItem('isLoggedIn');
+            document.getElementById('loginPanel').style.display = 'block';
+            document.getElementById('chatPanel').style.display = 'none';
+            showLoginStatus('Session expired. Please login again.');
+        }
+
+        async function login() {
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',  // Ensure cookies are sent with the request
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.message && data.message.includes('success')) {
+                    isLoggedIn = true;
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('username', data.user);
+                    document.getElementById('loginPanel').style.display = 'none';
+                    document.getElementById('chatPanel').style.display = 'block';
+                    
+                    // Clear chat area and add welcome message
+                    document.getElementById('chatArea').innerHTML = `
+                        <div class="message bot-message">
+                            Hello! I'm NyaySaathi, your AI Legal Assistant. How can I help you today?
+                        </div>
+                    `;
+                    
+                    // Wait for session to be established then load history
+                    setTimeout(loadHistory, 500);
+                } else {
+                    showLoginStatus('Login failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Login Error:', error);
+                showLoginStatus('Error connecting to server');
+            }
+        }
+
+        window.addEventListener('load', () => {
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                isLoggedIn = true;
+                document.getElementById('loginPanel').style.display = 'none';
+                document.getElementById('chatPanel').style.display = 'block';
+                loadHistory();
+            }
+        });
+
+        async function logout() {
+            try {
+                await makeRequest(`${API_URL}/logout`, { method: 'GET' });
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('sessionUsername');
+                isLoggedIn = false;
+                document.getElementById('loginPanel').style.display = 'block';
+                document.getElementById('chatPanel').style.display = 'none';
+                document.getElementById('chatArea').innerHTML = '';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        async function sendMessage() {
+            if (!isLoggedIn) {
+                showError('Please login first');
+                return;
+            }
+
+            const message = document.getElementById('messageInput').value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            document.getElementById('messageInput').value = '';
+
+            try {
+                const response = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const errorMessage = data.error?.message || 'Unknown error occurred';
+                    showError(errorMessage);
+                    if (response.status === 401) {
+                        await handleSessionExpired();
+                    }
+                    return;
+                }
+
+                const formattedResponse = data.response.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                addMessage(formattedResponse, false);
+            } catch (error) {
+                console.error('Chat Error:', error);
+                showError('Unable to connect to server. Please check your internet connection.');
+            }
+        }
+
+        async function loadHistory() {
+            if (!isLoggedIn) return;
+            
+            try {
+                console.log('Loading history...');  // Debug log
+                const response = await fetch(`${API_URL}/history`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include'  // Ensure cookies are sent with the request
+                });
+                
+                console.log('History response:', response.status);  // Debug log
+                
+                if (response.status === 401) {
+                    console.log('Session expired');  // Debug log
+                    await handleSessionExpired();
+                    return;
+                }
+                
+                const history = await response.json();
+                console.log('History loaded:', history);  // Debug log
+                
+                history.forEach(conv => {
+                    addMessage(conv.message, true);
+                    addMessage(conv.response, false);
+                });
+            } catch (error) {
+                console.error('History Error:', error);
+            }
+        }
+
+        function addMessage(text, isUser) {
+            const chatArea = document.getElementById('chatArea');
+            const div = document.createElement('div');
+            div.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            div.innerHTML = text;
+            chatArea.appendChild(div);
+            div.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showLoginStatus(message) {
+            document.getElementById('loginStatus').textContent = message;
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'message bot-message error';
+            errorDiv.style.color = '#d32f2f';
+            errorDiv.style.backgroundColor = '#ffebee';
+            errorDiv.style.border = '1px solid #ffcdd2';
+            errorDiv.innerHTML = `<strong>Error:</strong> ${message}`;
+            document.getElementById('chatArea').appendChild(errorDiv);
+            errorDiv.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => errorDiv.remove(), 5000); // Remove error after 5 seconds
+        }
+
+        document.getElementById('messageInput')?.addEventListener('keypress', e => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>

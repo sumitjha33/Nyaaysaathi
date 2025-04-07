@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NyaySaathi Simple App</title>
+    <style>
+        .chat-area { 
+            width: 500px; 
+            margin: 20px auto; 
+            padding: 20px;
+            border: 1px solid #ccc;
+        }
+        .message { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .user { background: #e3f2fd; text-align: right; }
+        .bot { background: #f5f5f5; }
+        #login-area { text-align: center; margin: 20px; }
+        #chat-area { display: none; }
+    </style>
+</head>
+<body>
+    <div id="login-area">
+        <h2>NyaySaathi Login</h2>
+        <input type="text" id="username" placeholder="Username (try: test)">
+        <input type="password" id="password" placeholder="Password (try: test123)">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div id="chat-area" class="chat-area">
+        <div id="messages"></div>
+        <div style="margin-top: 20px">
+            <input type="text" id="message" placeholder="Type your message..." style="width: 80%">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

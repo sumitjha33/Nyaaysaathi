@@ -4,7 +4,7 @@ import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 import logging
-from helplines import get_state_helplines  # Remove the relative import
+
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -132,24 +132,6 @@ def chat():
 
         # Get location-specific helplines
         state = location.split(',')[-1].strip().lower() if location else None
-        helplines = get_state_helplines(state) if state else {}
-
-        # Add location-specific helplines to response
-        if helplines:
-            helpline_html = f'''
-            <div class="local-helplines">
-                <h3 class="section-title">Local Helplines for {location}</h3>
-                <div class="contact-grid">
-                    {''.join([f"""
-                        <div class="contact-item">
-                            <div class="contact-label">{k.replace('_', ' ').title()}:</div>
-                            <div class="contact-value">{v}</div>
-                        </div>
-                    """ for k, v in helplines.items()])}
-                </div>
-            </div>
-            '''
-            formatted_response = formatted_response.replace('</div></div>', f'{helpline_html}</div></div>')
 
         return jsonify({
             'response': formatted_response,
