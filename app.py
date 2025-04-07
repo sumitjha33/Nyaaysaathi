@@ -4,7 +4,7 @@ import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 import logging
-from helplines import get_state_helplines
+
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
