@@ -11,3 +11,4 @@ huggingface-hub==0.20.3
 torch==2.1.2
 transformers==4.37.2
 datetime
+bs4
