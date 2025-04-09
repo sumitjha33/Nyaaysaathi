@@ -166,10 +166,10 @@ def get_relevant_ipc_sections(query, history):
         return []
 
 def generate_greeting():
-    """Generate a friendly greeting message"""
-    return """Hello! I'm your legal assistant from NyaaySaathi. I'm here to help you understand your legal rights and options.
+    """Generate a professional advocate-style greeting message"""
+    return """Greetings, I am your legal consultant from NyaaySaathi. As a legal professional, I am here to provide you with information regarding your legal rights and options under Indian law.
 
-Feel free to share your situation, and I'll guide you through the appropriate legal steps. How can I assist you today?"""
+Please share the details of your situation, and I will guide you through the appropriate legal procedures and remedies available to you. How may I assist you today?"""
 
 def generate_question_bank(message, history):
     """Generate a comprehensive bank of questions for information gathering"""
@@ -199,7 +199,7 @@ def generate_question_bank(message, history):
         9. WITNESSES: Who saw or knows about the incidents
         10. JURISDICTION: Location details relevant to legal jurisdiction
         
-        Return each question on a new line. Make questions conversational and empathetic.
+        Return each question on a new line. Make questions formal and professional while remaining empathetic.
         """
         
         response = model.generate_content(prompt)
@@ -221,16 +221,16 @@ def generate_question_bank(message, history):
         logger.error(f"Error generating question bank: {str(e)}")
         # Fallback questions
         return [
-            "Can you tell me when this incident first occurred?",
-            "Where exactly did this happen? This helps determine jurisdiction.",
-            "Who was involved in the incident? What is your relationship with them?",
-            "Has there been any physical harm or threats to your safety?",
-            "Do you have any evidence like messages, photos, or witnesses?",
-            "Have you filed any police complaints or taken legal action previously?",
-            "Are there any ongoing threats or safety concerns right now?",
-            "How has this affected you physically, emotionally, or financially?",
-            "Can you describe the most recent incident in detail?",
-            "Has anyone else witnessed these incidents?"
+            "Can you provide the specific date and time when this incident first occurred?",
+            "In which jurisdiction did these events take place? This is essential for determining applicable legal provisions.",
+            "Could you identify all parties involved in the incident and specify your relationship with them?",
+            "Have you sustained any physical injuries or received threats to your safety or wellbeing?",
+            "What documentary evidence (such as communications, photographs, or medical reports) do you possess regarding this matter?",
+            "Have you previously initiated any legal proceedings or filed complaints with law enforcement?",
+            "Are there any ongoing threats or immediate safety concerns that require urgent attention?",
+            "What physical, emotional, or financial consequences have you experienced as a result of these incidents?",
+            "Could you describe the most recent incident in comprehensive detail?",
+            "Are there witnesses who can corroborate the incidents you have described?"
         ]
 
 def select_next_questions(question_bank, questions_asked, message, history, max_questions=3):
@@ -238,7 +238,7 @@ def select_next_questions(question_bank, questions_asked, message, history, max_
     try:
         if not question_bank or len(question_bank) == 0:
             # Fallback if no questions in bank
-            return ["Could you please provide more details about your situation?"]
+            return ["Could you please provide additional details regarding your legal situation?"]
         
         # Create context from history
         context = "\n".join([f"{msg['type']}: {msg['content']}" for msg in history])
@@ -296,19 +296,19 @@ def select_next_questions(question_bank, questions_asked, message, history, max_
         return question_bank[start:end]
 
 def format_questions_as_conversation(questions):
-    """Format multiple questions into a conversational flow"""
+    """Format multiple questions into a professional advocate-style conversation"""
     if not questions:
         return ""
         
-    # Conversation bridges
+    # Professional advocate-style question bridges
     bridges = [
-        "I'd like to understand more about", 
-        "Could you also tell me", 
-        "It would help to know", 
-        "I'm wondering",
-        "Can you share with me",
-        "I'd appreciate knowing",
-        "It's important to understand"
+        "For proper legal assessment, I need to inquire about", 
+        "It would be pertinent to understand", 
+        "Please provide details regarding", 
+        "For the purposes of legal clarity, could you elaborate on",
+        "As your legal consultant, I need to know",
+        "It is essential for your case that I understand",
+        "From a legal standpoint, I must ask about"
     ]
     
     formatted_questions = []
@@ -328,14 +328,14 @@ def format_questions_as_conversation(questions):
     # Add remaining questions with connectors
     for i in range(1, len(formatted_questions)):
         if i == len(formatted_questions) - 1 and len(formatted_questions) > 1:
-            result += f". And finally, {formatted_questions[i].lower()}?"
+            result += f". Furthermore, {formatted_questions[i].lower()}?"
         else:
             result += f". {formatted_questions[i]}?"
             
     return result
 
 def generate_empathy_message(message, history):
-    """Generate an empathetic response based on the user's situation"""
+    """Generate an empathetic yet professional response based on the user's situation"""
     try:
         # Create context from history
         context = "\n".join([f"{msg['type']}: {msg['content']}" for msg in history]) 
@@ -348,13 +348,13 @@ def generate_empathy_message(message, history):
         
         Latest user message: {message}
         
-        Generate a brief, empathetic response (2-3 sentences) acknowledging the situation.
-        The tone should be warm and compassionate but also professional.
-        Do not provide legal advice in this response, just acknowledge their situation.
-        If the user is clearly distressed, validate their emotions.
-        If they mention harm or danger, express appropriate concern.
+        Generate a brief, professionally empathetic response (2-3 sentences) acknowledging the situation.
+        The tone should be that of a dignified, experienced advocate who shows compassion while maintaining professional decorum.
+        Do not provide legal advice in this response, just acknowledge their situation with appropriate gravity.
+        If the user is clearly distressed, validate their concerns in a measured, respectful manner.
+        If they mention harm or danger, express appropriate professional concern.
         
-        Remember to be authentic and genuine in the response.
+        Use formal legal language while remaining accessible.
         """
         
         response = model.generate_content(prompt)
@@ -362,10 +362,10 @@ def generate_empathy_message(message, history):
     except Exception as e:
         logger.error(f"Error generating empathy message: {str(e)}")
         # Fallback empathy message if API fails
-        return "I understand this situation must be difficult for you. Thank you for sharing these details with me. You have legal rights, and I'm here to help you navigate through this challenging time."
+        return "I acknowledge the seriousness of the situation you have described. As your legal consultant, I assure you that the law provides remedies for such circumstances. Let us proceed methodically to address your concerns."
 
 def generate_legal_assessment(message, history, ipc_sections):
-    """Generate a legal assessment based on the conversation and IPC sections"""
+    """Generate a professional legal assessment based on the conversation and IPC sections"""
     try:
         # Create context from history
         context = "\n".join([f"{msg['type']}: {msg['content']}" for msg in history])
@@ -386,12 +386,13 @@ def generate_legal_assessment(message, history, ipc_sections):
         
         {ipc_context}
         
-        Provide a CLEAR, DIRECT legal assessment (2-3 sentences).
+        Provide a FORMAL, AUTHORITATIVE legal assessment (2-3 sentences) as a professional advocate would.
+        Use proper legal terminology and citation format.
         Specifically identify IPC sections that apply using this format: 
-        "Based on what you've shared, your case falls under [IPC sections]"
+        "Based on the facts presented, your matter falls within the ambit of [IPC sections]"
         
-        Then add 1-2 sentences explaining why these sections apply in plain language.
-        Be extremely concise and direct in your assessment.
+        Then add 1-2 sentences explaining the legal implications in professional yet accessible language.
+        Maintain a dignified, authoritative tone throughout.
         """
         
         response = model.generate_content(prompt)
@@ -399,10 +400,10 @@ def generate_legal_assessment(message, history, ipc_sections):
     except Exception as e:
         logger.error(f"Error generating legal assessment: {str(e)}")
         # Fallback assessment if API fails
-        return "Based on what you've shared, your case falls under IPC Section 498A (cruelty), Section 323 (causing hurt), and Section 506 (criminal intimidation). These sections address the physical harm and threatening behavior you've experienced, which constitute criminal offenses under Indian law."
+        return "Based on the facts presented, your matter falls within the ambit of IPC Section 498A (matrimonial cruelty), Section 323 (voluntarily causing hurt), and Section 506 (criminal intimidation). These provisions specifically address the infliction of physical harm and threatening conduct as described, which constitute cognizable offenses under the Indian Penal Code."
 
 def generate_action_steps(message, history, location):
-    """Generate action steps based on the legal situation"""
+    """Generate professional action steps based on the legal situation"""
     try:
         # Create context from history
         context = "\n".join([f"{msg['type']}: {msg['content']}" for msg in history])
@@ -416,20 +417,20 @@ def generate_action_steps(message, history, location):
         Latest user message: {message}
         User location: {location}
         
-        Generate 6-7 clear action steps the person should take next.
-        Each step should be specific, practical, and immediately actionable.
-        Format as a numbered list.
+        Generate 6-7 precisely formulated legal action steps the person should take, in the style of a professional advocate.
+        Each step should be specific, procedurally correct, and immediately actionable.
+        Format as a numbered list using formal legal terminology while remaining comprehensible.
         Include:
-        1. Immediate safety measures if relevant
-        2. Documentation and evidence collection steps
-        3. Filing appropriate legal complaints (specify which type and where)
-        4. Protection orders or restraining orders if applicable (with specific process)
-        5. Support services to contact (with specific names/numbers for {location})
-        6. Legal aid options in {location} (be specific)
-        7. Follow-up measures and timeline
+        1. Immediate safety protocols if pertinent
+        2. Documentation and evidence preservation procedures
+        3. Filing appropriate legal complaints (specify the exact type and venue)
+        4. Protection orders or restraining orders if applicable (with specific procedural requirements)
+        5. Support services to contact (with specific institutions/numbers for {location})
+        6. Legal aid options in {location} (provide specific institutions)
+        7. Follow-up legal procedures and timeline
         
-        Each step should have 15-25 words of explanation.
-        Be extremely direct and practical.
+        Each step should have 15-25 words of precise explanation using formal legal language.
+        Maintain professional advocate tone throughout.
         """
         
         response = model.generate_content(prompt)
@@ -438,19 +439,19 @@ def generate_action_steps(message, history, location):
         logger.error(f"Error generating action steps: {str(e)}")
         # Fallback action steps if API fails
         return """
-        1. File an FIR at your nearest police station immediately. Bring ID proof and write down key incident details beforehand.
+        1. Lodge a First Information Report (FIR) at the jurisdictional police station with proper identification documentation and a concise written account of the incident.
         
-        2. Collect and preserve all evidence including photos, messages, medical reports, and witness statements in a secure location.
+        2. Secure and catalogue all evidentiary materials including photographic documentation, electronic communications, medical certificates, and witness testimonials in chronological order.
         
-        3. Seek a protection order under the Domestic Violence Act, 2005 through your local magistrate court with help from a protection officer.
+        3. Petition for a Protection Order under Section 18 of the Protection of Women from Domestic Violence Act, 2005 through the appropriate Magistrate's Court with assistance from a Protection Officer.
         
-        4. Contact the Women's Helpline (1091) for immediate assistance, guidance, and connections to support services in your area.
+        4. Establish contact with the Women's Helpline (1091) for immediate intervention, procedural guidance, and referral to appropriate support services in your jurisdiction.
         
-        5. Consult with a lawyer from your District Legal Services Authority for free legal advice specific to your situation.
+        5. Seek legal consultation through your District Legal Services Authority for pro bono legal counsel tailored to the specific circumstances of your case.
         
-        6. Keep a detailed journal documenting all incidents with dates, times, descriptions, and impact on your wellbeing.
+        6. Maintain a comprehensive chronological record documenting all incidents with precise dates, times, detailed descriptions, and impact assessment for evidentiary purposes.
         
-        7. Connect with local women's NGOs like Shakti Shalini or Jagori for counseling and ongoing support through the legal process.
+        7. Establish communication with recognized women's rights organizations such as Shakti Shalini or Jagori for psychological support and procedural assistance throughout the legal proceedings.
         """
 
 def get_helpline_numbers(location):
@@ -542,14 +543,14 @@ def format_ipc_sections_text(ipc_sections):
     return sections_text
 
 def generate_structured_response(stage, message, history, location, session_data, ipc_sections=None):
-    """Generate conversational response based on conversation stage"""
+    """Generate professional advocate-style response based on conversation stage"""
     
     if stage == "GREETING":
-        # Return a friendly greeting
+        # Return a professional greeting
         return generate_greeting()
     
     if stage == "INITIAL":
-        # First response: Empathy + Initial Questions
+        # First response: Professional empathy + Initial Questions
         
         # Generate question bank and store in session
         question_bank = generate_question_bank(message, history)
@@ -576,11 +577,11 @@ def generate_structured_response(stage, message, history, location, session_data
         
         response = f"""{empathy_message}
 
-Let's start by understanding your situation better. {questions_text}"""
+In order to provide you with accurate legal counsel, I need to gather pertinent information about your case. {questions_text}"""
         return response
     
     elif stage == "INFORMATION_GATHERING":
-        # Generate empathy message
+        # Generate professional empathy message
         empathy_message = generate_empathy_message(message, history)
         
         # Get question bank from session or generate new one
@@ -607,20 +608,20 @@ Let's start by understanding your situation better. {questions_text}"""
         # Format questions conversationally
         questions_text = format_questions_as_conversation(questions_to_ask)
         
-        response = f"""Thank you for sharing that information. {empathy_message}
+        response = f"""Thank you for providing this information. {empathy_message}
 
-{questions_text}"""
+For further clarity on your legal position, {questions_text}"""
         return response
     
     elif stage == "LEGAL_ANALYSIS":
-        # Provide legal assessment, IPC sections, and action steps
+        # Provide legal assessment, IPC sections, and action steps in professional manner
         legal_assessment = generate_legal_assessment(message, history, ipc_sections)
         
         # If legal assessment doesn't include IPC sections, add them
         if "section" not in legal_assessment.lower() and ipc_sections:
             ipc_text = format_ipc_sections_text(ipc_sections)
             if ipc_text:
-                legal_assessment = f"Based on what you've shared, your case falls under {ipc_text}."
+                legal_assessment = f"Based on the facts presented, your matter appears to fall within the purview of {ipc_text}."
         
         # Format action steps as a list with emoji numbers
         action_steps = generate_action_steps(message, history, location).strip().split('\n')
@@ -636,13 +637,13 @@ Let's start by understanding your situation better. {questions_text}"""
         
         response = f"""{legal_assessment}
 
-**Here are the steps you should take:**
+**I recommend the following course of action:**
 
 {formatted_steps}
 
-Are you currently safe? If you're in immediate danger, please **call {helplines.get('Police', '112')} (police emergency) right away.**
+Regarding your immediate safety: If you perceive any imminent threat to your wellbeing, please **immediately contact {helplines.get('Police', '112')} (police emergency).**
 
-Would you like more specific information about any of these steps?"""
+Would you require any specific clarification regarding the recommended procedures?"""
         
         return response
     
@@ -650,8 +651,8 @@ Would you like more specific information about any of these steps?"""
     return get_fallback_response()
 
 def get_fallback_response():
-    """Provide a fallback response if API calls fail"""
-    return """I apologize, but I'm having trouble processing your request right now. If you're facing a domestic violence situation, please call the Women's Helpline at 1091 or the Police Emergency number 112 immediately. You can also reach out to the Legal Aid Services at 1516."""
+    """Provide a professional fallback response if API calls fail"""
+    return """I regret to inform you that I am experiencing technical difficulties in processing your query at this moment. If you are facing a situation requiring immediate legal intervention, please contact the Women's Helpline at 1091 or the Police Emergency number 112 without delay. For legal assistance, you may also reach the Legal Aid Services at 1516."""
 
 @app.route('/create_session', methods=['POST'])
 def create_session():
@@ -704,6 +705,21 @@ def chat():
         ipc_sections = None
         if conversation_stage == "LEGAL_ANALYSIS":
             ipc_sections = get_relevant_ipc_sections(message, history)
+        
+        # Add language instruction to model prompt
+        model = genai.GenerativeModel("gemini-2.0-flash")
+        prompt = f"""
+        IMPORTANT: Respond ONLY in {preferred_language} language.
+        
+        User message: {message}
+        Location: {location}
+        Context: {history}
+        
+        Generate a helpful legal response in {preferred_language} language.
+        Keep legal terms clear but explain everything in {preferred_language}.
+        """
+        
+        response = model.generate_content(prompt)
         
         # Generate structured response based on stage
         response_text = generate_structured_response(
