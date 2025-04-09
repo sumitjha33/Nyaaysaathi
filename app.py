@@ -717,7 +717,7 @@ def chat():
 
         # Update session with last activity timestamp
         if session_id in conversation_sessions:
-            conversation_sessions[session_id]['last_activity'] = datetime.datetime.now().isoformat()
+            conversation_sessions[session_id]['last_activity'] = datetime.now().isoformat()
 
         return jsonify({
             'response': response_text,
