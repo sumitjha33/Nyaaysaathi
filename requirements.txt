@@ -10,4 +10,4 @@ sentence-transformers==2.2.2
 huggingface-hub==0.20.3
 torch==2.1.2
 transformers==4.37.2
-datetime==5.1.1
+datetime
