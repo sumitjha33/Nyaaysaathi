@@ -10,6 +10,3 @@ sentence-transformers==2.2.2
 huggingface-hub==0.20.3
 torch==2.1.2
 transformers==4.37.2
-beautifulsoup4==4.12.2
-soupsieve==2.5
-DateTime==5.4
