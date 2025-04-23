@@ -343,7 +343,7 @@ def translate_to_language(text, language):
         return text  # Return original text if translation fails
 
 # Initialize LangChain memory
-memory = ConversationBufferWindowMemory(k=6)  # Store only the last 8 conversation exchanges
+memory = ConversationBufferWindowMemory(k=5)  # Store only the last 8 conversation exchanges
 
 # Chat endpoint
 @app.route('/chat', methods=['POST', 'OPTIONS'])
