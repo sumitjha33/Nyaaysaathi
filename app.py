@@ -78,20 +78,14 @@ class GeminiChatModel(BaseChatModel):
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, supports_credentials=True)  # Enable CORS for all routes
 
-# Add CORS headers to all responses
 @app.after_request
 def after_request(response):
-    if 'Origin' in request.headers:
-        origin = request.headers['Origin']
-        response.headers['Access-Control-Allow-Origin'] = origin
-    else:
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+    response.headers.add("Access-Control-Allow-Origin", request.headers.get("Origin", "*"))
+    response.headers.add("Access-Control-Allow-Credentials", "true")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+    response.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
     return response
 
 # Location-specific emergency helpline numbers
