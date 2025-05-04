@@ -236,43 +236,33 @@
         }
 
         async function sendMessage() {
-            if (!isLoggedIn) {
-                showError('Please login first');
-                return;
-            }
-
-            const message = document.getElementById('messageInput').value.trim();
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
             if (!message) return;
 
             addMessage(message, true);
-            document.getElementById('messageInput').value = '';
+            input.value = '';
 
             try {
-                const response = await fetch(`${API_URL}/chat`, {
+                const response = await fetch('https://nyaaysaathi-3.onrender.com/chat', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
-                    credentials: 'include',
-                    body: JSON.stringify({ message })
+                    mode: 'cors',  // Add this line
+                    body: JSON.stringify({
+                        message: message,
+                        history: [],
+                        location: 'delhi',
+                        preferred_language: 'English'
+                    })
                 });
 
                 const data = await response.json();
-
-                if (!response.ok) {
-                    const errorMessage = data.error?.message || 'Unknown error occurred';
-                    showError(errorMessage);
-                    if (response.status === 401) {
-                        await handleSessionExpired();
-                    }
-                    return;
-                }
-
-                const formattedResponse = data.response.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                addMessage(formattedResponse, false);
-            } catch (error) {
-                console.error('Chat Error:', error);
-                showError('Unable to connect to server. Please check your internet connection.');
+                addMessage(data.response, false);
+            } catch (e) {
+                addMessage('Error: ' + e, false);
             }
         }
 
